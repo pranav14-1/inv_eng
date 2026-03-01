@@ -5,12 +5,13 @@ A specialized backend system designed to handle "Flash Sale" scenarios where hig
 ## 🛠 Tech Stack
 * **Runtime:** Node.js
 * **Framework:** Express.js
-* **Database:** PostgreSQL
-* **Libraries:** `pg` (node-postgres), `dotenv`
+* **Databases:** PostgreSQL (Primary), Redis (Cache Layer)
+* **Libraries:** `pg` (node-postgres), `redis`, `dotenv`
 
 ## 📁 Project Structure
 * `index.js`: Main entry point and API route definitions.
 * `src/db.js`: Database connection logic using **Connection Pooling**.
+* `src/redis.js`: Redis connection logic for fast-caching.
 * `.env`: Configuration for sensitive database credentials.
 * `.gitignore`: Prevents `node_modules` and `.env` from being tracked.
 
@@ -27,6 +28,11 @@ A specialized backend system designed to handle "Flash Sale" scenarios where hig
 * **Atomic Transactions:** Uses `BEGIN`, `COMMIT`, and `ROLLBACK` to ensure that stock checks and decrements happen as a single, unbreakable unit.
 * **Race Condition Prevention:** Tested with concurrent scripts to ensure stock never drops below zero, even when multiple users buy simultaneously.
 
+### Phase 2: Performance (Redis Integration)
+* **In-Memory Caching:** Integrated Redis to handle the high volume of initial stock checks.
+* **Atomic Decrement:** Utilized Redis `DECR` for fast, atomic operations without race conditions.
+* **Fast-Fail Mechanism:** Instantly rejects invalid requests (out of stock), avoiding expensive PostgreSQL calls and drastically increasing throughput.
+
 ## 🚀 Getting Started
 1. **Clone the repo**
 2. **Install dependencies:** `npm install`
@@ -37,7 +43,8 @@ A specialized backend system designed to handle "Flash Sale" scenarios where hig
 
 ## 📈 Roadmap
 - [x] Phase 0: Foundation & Environment Setup
-- [x] Phase 1: Data Integrity (Pessimistic Locking)
-- [x]Phase 2: Performance (Redis Integration)
+- [x] Phase 1: Data Integrity (**Pessimistic Locking**)
+- [x] Phase 2: Performance (**Redis Integration**)
 - [ ] Phase 3: Scalability (**Message Queues**)
 - [ ] Phase 4: Validation (**Load Testing**)
+- [ ] Phase 5: UI/Frontend (**Visualizing the Flash Sale**)
