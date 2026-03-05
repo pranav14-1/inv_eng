@@ -45,6 +45,6 @@ A specialized backend system designed to handle "Flash Sale" scenarios where hig
 - [x] Phase 0: Foundation & Environment Setup
 - [x] Phase 1: Data Integrity (**Pessimistic Locking**)
 - [x] Phase 2: Performance (**Redis Integration**)
-- [ ] Phase 3: Scalability (**Message Queues**)
+- [x] Phase 3: Scalability (**Message Queues**)
 - [ ] Phase 4: Validation (**Load Testing**)
 - [ ] Phase 5: UI/Frontend (**Visualizing the Flash Sale**)

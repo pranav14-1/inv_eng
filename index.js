@@ -1,6 +1,7 @@
 const express = require('express');
 const pool = require('./src/db');
 const redisClient = require('./src/redis');
+const queue = require('./src/queue');
 const app = express();
 const PORT = 3000;
 
@@ -54,57 +55,15 @@ app.post('/buy/:id', async (req, res) => {
       return res.status(400).json({ message: "Out of stock! (Caught by Cache)" });
     }
 
-    // ---- [PHASE 1] DATABASE LAYER ----
-    // 3. Get a dedicated client from the pool for a transaction
-    const client = await pool.connect();
+    // ---- [PHASE 3] QUEUE LAYER (RabbitMQ) ----
+    const queued = await queue.publishToQueue('purchase_orders', { productId });
 
-    try {
-      // 4. Start Transaction (Atomic block)
-      await client.query('BEGIN');
-
-      // 5. The Lock: Fetch stock and prevent others from editing this row
-      const result = await client.query(
-        'SELECT stock_quantity FROM products WHERE id = $1 FOR UPDATE',
-        [productId]
-      );
-
-      const product = result.rows[0];
-
-      if (!product) {
-        await client.query('ROLLBACK');
-        // Undo the Redis deduction since product doesn't exist
-        await redisClient.incr(redisKey);
-        return res.status(404).json({ error: "Product not found" });
-      }
-
-      // 6. Logic: Only update if DB stock is available
-      if (product.stock_quantity > 0) {
-        await client.query(
-          'UPDATE products SET stock_quantity = stock_quantity - 1 WHERE id = $1',
-          [productId]
-        );
-
-        // 7. Success: Save changes and release lock
-        await client.query('COMMIT');
-        res.json({
-          message: "Purchase successful!",
-          remaining_stock: product.stock_quantity - 1
-        });
-      } else {
-        // DB says out of stock, so our cache was out of sync.
-        await client.query('ROLLBACK');
-        // Fix the cache by syncing it up
-        await redisClient.set(redisKey, 0);
-        res.status(400).json({ message: "Out of stock!" });
-      }
-    } catch (err) {
-      // Transaction failed, rollback DB and increment cache back
-      await client.query('ROLLBACK');
+    if (queued) {
+      return res.status(202).json({ message: "Order accepted and is processing." });
+    } else {
+      // Put stock back in cache if queue fails
       await redisClient.incr(redisKey);
-      console.error("Transaction Error:", err.message);
-      res.status(500).json({ error: "Transaction failed" });
-    } finally {
-      client.release();
+      return res.status(500).json({ error: "Failed to queue order." });
     }
   } catch (redisErr) {
     console.error("Redis Error:", redisErr.message);
@@ -116,4 +75,6 @@ app.listen(PORT, async () => {
   console.log(`Server running at http://localhost:${PORT}`);
   // Initialize Redis Cache when server starts
   await initRedis();
+  // Initialize RabbitMQ Connection
+  await queue.connectQueue();
 });
