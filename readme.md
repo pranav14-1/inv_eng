@@ -54,4 +54,4 @@ A specialized backend system designed to handle "Flash Sale" scenarios where hig
 - [x] Phase 2: Performance (**Redis Integration**)
 - [x] Phase 3: Scalability (**Message Queues**)
 - [x] Phase 4: Validation (**Load Testing**)
-- [ ] Phase 5: UI/Frontend (**Visualizing the Flash Sale**)
+- [x] Phase 5: UI/Frontend (**Visualizing the Flash Sale**)

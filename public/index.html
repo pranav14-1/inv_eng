@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>High-Concurrency Inventory Engine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="dashboard">
+        <header>
+            <div class="brand-tag">
+                <span class="pulse-dot"></span> Inventory Engine Demo
+            </div>
+            <h1>Limited Edition Sneaker</h1>
+            <p class="subtitle">Flash Sale is live. Don't miss out!</p>
+        </header>
+
+        <main class="card product-card">
+            <div class="stock-display">
+                <span class="stock-label">Available Stock</span>
+                <div class="stock-number" id="stockDisplay">--</div>
+            </div>
+            <button id="buyBtn" class="btn primary-btn" disabled>
+                <span class="btn-text">Buy Now</span>
+            </button>
+        </main>
+
+        <section class="card controls-card">
+            <div class="controls-header">
+                <h2>System Load Controls</h2>
+                <span class="status-badge" id="connStatus">Connecting...</span>
+            </div>
+
+            <div class="test-config">
+                <div class="input-group">
+                    <label>Starting Stock</label>
+                    <input type="number" id="setupStock" value="30" min="1">
+                </div>
+                <div class="input-group">
+                    <label>Concurrent Buyers</label>
+                    <input type="number" id="simBuyers" value="100" min="1">
+                </div>
+            </div>
+
+            <button id="simulateBtn" class="btn secondary-btn" disabled>Setup & Simulate 100 Buyers</button>
+
+            <div id="logs" class="log-console">
+                <div class="log-entry log-info">[System] Ready to accept orders.</div>
+            </div>
+        </section>
+
+        <!-- Dynamic Explanation Panel -->
+        <div id="explanationPanel" class="card explanation-card hidden">
+            <h3>System Results Explained</h3>
+            <p id="explanationText">Waiting for simulation...</p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

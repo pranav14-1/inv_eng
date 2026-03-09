@@ -6,13 +6,9 @@ const app = express();
 const PORT = 3000;
 
 app.use(express.json());
+app.use(express.static('public')); // Serve the frontend files in 'public' directory
 
-// 1. Home route - if you see this, the server is working
-app.get('/', (req, res) => {
-  res.send('Welcome to the Inventory Engine! Try /test-db next.');
-});
-
-// 2. The DB test route.
+// 1. The DB test route.
 app.get('/test-db', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM products');
@@ -36,6 +32,38 @@ async function initRedis() {
     console.error("Failed to initialize Redis:", err.message);
   }
 }
+
+// POST request to setup stock directly from the UI
+app.post('/api/stock/:id', async (req, res) => {
+  const { stock } = req.body;
+  if (stock === undefined || stock < 0) {
+    return res.status(400).json({ error: "Invalid stock value" });
+  }
+  try {
+    // 1. Update Database
+    await pool.query('UPDATE products SET stock_quantity = $1 WHERE id = $2', [stock, req.params.id]);
+
+    // 2. Update Redis
+    await redisClient.set(`product:${req.params.id}:stock`, stock);
+
+    res.json({ message: `Stock set to ${stock}` });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to setup stock" });
+  }
+});
+
+// GET request to check current stock quickly from Redis
+app.get('/api/stock/:id', async (req, res) => {
+  try {
+    const stock = await redisClient.get(`product:${req.params.id}:stock`);
+    if (stock === null) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+    res.json({ productId: req.params.id, stock: parseInt(stock, 10) });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch stock" });
+  }
+});
 
 // POST request to buy an item by ID
 app.post('/buy/:id', async (req, res) => {
