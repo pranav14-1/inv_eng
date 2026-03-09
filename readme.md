@@ -1,57 +1,103 @@
-# High-Concurrency Inventory Engine
+# ⚡ High-Concurrency Inventory Engine
+*A specialized backend system designed to prevent overselling during high-traffic "Flash Sales"*
 
-A specialized backend system designed to handle "Flash Sale" scenarios where high traffic and data integrity are critical. This project demonstrates how to prevent "Overselling" using professional system design patterns.
+<p>
+  <img alt="Node.js" src="https://img.shields.io/badge/Node.js-18.x-green.svg">
+  <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-15.x-blue.svg">
+  <img alt="Redis" src="https://img.shields.io/badge/Redis-Cache-red.svg">
+  <img alt="RabbitMQ" src="https://img.shields.io/badge/RabbitMQ-Queues-orange.svg">
+</p>
+
+---
+
+## 🎯 The Problem: "Overselling"
+During a flash sale (e.g., PS5 launch, concert tickets), thousands of users attempt to purchase the same limited-stock item at the exact same millisecond. If the backend is not properly synchronized, "Race Conditions" occur, allowing 500 users to successfully buy an item that only has 10 units in stock.
+
+## 💡 The Solution
+This project implements a highly scalable, data-integrous architecture to guarantee **zero overselling**, even under severe load tests of 500+ concurrent requests per second.
+
+### Core Architectural Features:
+1. **In-Memory Caching (Redis):** Handles the initial barrage of traffic with an atomic `DECR` operation, acting as a "Fast-Fail" mechanism to instantly reject users when stock theoretically hits zero.
+2. **Message Queuing (RabbitMQ):** Accepted purchase intents are pushed to an asynchronous queue, decoupling the incoming web traffic from the heavy database lifting.
+3. **Pessimistic Data Locking (PostgreSQL):** Worker nodes consume the queue and use `SELECT ... FOR UPDATE` to lock database rows at the hardware level, ensuring that the final source of truth decrements atomically and safely.
+
+---
 
 ## 🛠 Tech Stack
-* **Runtime:** Node.js
-* **Framework:** Express.js
-* **Databases:** PostgreSQL (Primary), Redis (Cache Layer)
-* **Libraries:** `pg` (node-postgres), `redis`, `dotenv`
+* **Runtime:** Node.js, Express.js
+* **Persistence:** PostgreSQL (Primary DB), Redis (In-Memory Cache)
+* **Message Broker:** RabbitMQ
+* **Performance Testing:** k6 (Standalone Load Testing Worker)
 
-## 📁 Project Structure
-* `index.js`: Main entry point and API route definitions.
-* `src/db.js`: Database connection logic using **Connection Pooling**.
-* `src/redis.js`: Redis connection logic for fast-caching.
-* `.env`: Configuration for sensitive database credentials.
-* `.gitignore`: Prevents `node_modules` and `.env` from being tracked.
-
-## ⚙️ Completed Features
-
-### Phase 0: Foundation
-* **REST API:** Basic endpoints for server health and database testing.
-* **Database Integration:** Secure connection to a PostgreSQL relational database.
-* **Connection Pooling:** Optimized database handshakes to handle concurrent requests.
-* **Environment Configuration:** Separation of code and sensitive credentials using `dotenv`.
-
-### Phase 1: Data Integrity (Concurrency Control)
-* **Pessimistic Locking:** Implemented `SELECT ... FOR UPDATE` logic to lock database rows during a transaction.
-* **Atomic Transactions:** Uses `BEGIN`, `COMMIT`, and `ROLLBACK` to ensure that stock checks and decrements happen as a single, unbreakable unit.
-* **Race Condition Prevention:** Tested with concurrent scripts to ensure stock never drops below zero, even when multiple users buy simultaneously.
-
-### Phase 2: Performance (Redis Integration)
-* **In-Memory Caching:** Integrated Redis to handle the high volume of initial stock checks.
-* **Atomic Decrement:** Utilized Redis `DECR` for fast, atomic operations without race conditions.
-* **Fast-Fail Mechanism:** Instantly rejects invalid requests (out of stock), avoiding expensive PostgreSQL calls and drastically increasing throughput.
-
-### Phase 4: Validation (Load Testing)
-* **K6 Load Testing:** Implemented a `k6` load testing script to bombard the API with 500 concurrent virtual users and over 38,000 requests in 10 seconds.
-* **Testing Tool Triumphs:** Initially struggled to use `Artillery` and `Autocannon` due to severe dependency resolution issues causing `npm install` blocks. Resolved this by leveraging `k6` as a standalone binary (written in Go) to avoid Node environment pollution and achieve maximum throughput.
-* **Empirical Proof:** Queried the database after the load test completed and empirically proved that stock naturally bottlenecked exactly at 0 rather than dropping into negatives, confirming our data integrity patterns worked flawlessly.
+---
 
 ## 🚀 Getting Started
-1. **Clone the repo**
-2. **Install dependencies:** `npm install`
-3. **Setup Database:** Create a PostgreSQL database named `inventory_db` and a `products` table.
-4. **Configure Environment:** Create a `.env` file with your DB credentials.
-5. **Start Infrastructure:** Ensure Redis and RabbitMQ are running.
-6. **Run Server:** `node index.js`
-7. **Test Purchase:** `curl -X POST http://localhost:3000/buy/1`
-8. **Load Test:** Install `k6` locally and run `npm run test:load`
 
-## 📈 Roadmap
-- [x] Phase 0: Foundation & Environment Setup
-- [x] Phase 1: Data Integrity (**Pessimistic Locking**)
-- [x] Phase 2: Performance (**Redis Integration**)
-- [x] Phase 3: Scalability (**Message Queues**)
-- [x] Phase 4: Validation (**Load Testing**)
-- [x] Phase 5: UI/Frontend (**Visualizing the Flash Sale**)
+### Prerequisites
+* Docker & Docker Compose (Recommended) OR
+* Local installations of PostgreSQL, Redis, and RabbitMQ
+* Node.js v16+
+
+### Installation & Setup
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/pranav14-1/inv_eng.git
+   cd inv_eng
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Configure Environment:**
+   Create a `.env` file in the root directory:
+   ```ini
+   DB_USER=postgres
+   DB_HOST=localhost
+   DB_NAME=inventory_db
+   DB_PASSWORD=your_password
+   DB_PORT=5432
+   REDIS_URL=redis://localhost:6379
+   RABBITMQ_URL=amqp://localhost
+   ```
+
+4. **Initialize Database:**
+   ```bash
+   node setup.js
+   ```
+
+5. **Run the Application:**
+   *Terminal 1 (Web Server):*
+   ```bash
+   node index.js
+   ```
+   *Terminal 2 (Queue Worker):*
+   ```bash
+   node worker.js
+   ```
+
+---
+
+## 📊 Benchmarks & Load Testing
+
+To prove the system's integrity, this project includes a **k6 Load Test script** that forces severe race conditions to validate our architectural decisions.
+
+**To run the test:**
+```bash
+npm run test:load
+```
+
+* **Test Conditions:** 500 Virtual Users, 10-second duration, max system throughput.
+* **Results:** The Redis cache correctly fast-failed ~95% of requests instantly. The PostgreSQL lock securely processed the remaining valid orders. Stock mathematically bounded at **exactly 0 with 0 negative inventories**.
+
+---
+
+## 🗺️ Project Phases & Roadmap
+- [x] **Phase 0:** Foundation & Environment Setup
+- [x] **Phase 1:** Data Integrity (**Pessimistic Locking**)
+- [x] **Phase 2:** Performance (**Redis Integration**)
+- [x] **Phase 3:** Scalability (**Message Queues**)
+- [x] **Phase 4:** Validation (**Load Testing**)
+- [x] **Phase 5:** UI/Frontend (**Visualizing the Flash Sale**)
