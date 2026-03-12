@@ -108,6 +108,9 @@ app.post('/buy/:id', async (req, res) => {
   }
 });
 
+// Keep-Alive / Ping route
+app.get('/ping', (req, res) => res.send('pong'));
+
 const worker = require('./worker');
 
 app.listen(PORT, async () => {
@@ -118,4 +121,13 @@ app.listen(PORT, async () => {
   await queue.connectQueue(process.env.RABBITMQ_URL || 'amqp://localhost');
   // Initialize Background Worker (Consolidated for free hosting)
   worker.connectAndConsume().catch(err => console.error("Worker failed to start:", err));
+
+  // Self-ping to keep Render free instance awake
+  const selfUrl = process.env.RENDER_EXTERNAL_URL;
+  if (selfUrl) {
+    console.log(`Keep-alive active: Pinging ${selfUrl} every 10 minutes`);
+    setInterval(() => {
+      fetch(`${selfUrl}/ping`).catch(err => console.error("Keep-alive ping failed:", err.message));
+    }, 10 * 60 * 1000); // 10 minutes
+  }
 });
