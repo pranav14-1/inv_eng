@@ -4,11 +4,8 @@ require('dotenv').config();
 const redisClient = redis.createClient({
     url: process.env.REDIS_URL || 'redis://localhost:6379',
     socket: {
-        reconnectStrategy: (retries) => {
-            if (retries > 10) return new Error('Retry limit reached');
-            return Math.min(retries * 50, 500);
-        },
-        tls: (process.env.REDIS_URL && process.env.REDIS_URL.startsWith('rediss')) ? {} : undefined
+        reconnectStrategy: (retries) => Math.min(retries * 50, 500),
+        tls: (process.env.REDIS_URL && process.env.REDIS_URL.startsWith('rediss')) ? true : false
     }
 });
 
