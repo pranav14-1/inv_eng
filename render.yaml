@@ -29,12 +29,9 @@ services:
           name: inventory-db
           property: port
       - key: REDIS_URL
-        fromService:
-          type: redis
-          name: inventory-cache
-          property: connectionString
+        sync: false # Set manually via Dashboard (from Upstash)
       - key: RABBITMQ_URL
-        sync: false # Set manually in Dashboard (e.g., from CloudAMQP)
+        sync: false # Set manually via Dashboard (from CloudAMQP)
 
   # 2. The Background Worker (Queue Processor)
   - type: worker
@@ -64,21 +61,10 @@ services:
           name: inventory-db
           property: port
       - key: REDIS_URL
-        fromService:
-          type: redis
-          name: inventory-cache
-          property: connectionString
+        sync: false 
       - key: RABBITMQ_URL
-        sync: false # Set manually in Dashboard
+        sync: false
 
 databases:
   - name: inventory-db
     plan: free
-
-# Note: Redis requires a paid plan on Render if you want it to persist or be private.
-# For demo purposes, you might use a managed Redis like Upstash if you want a free tier.
-# Render-native Redis example below:
-redis:
-  - name: inventory-cache
-    plan: free
-    ipAllowList: [] # Only allow internal connections
