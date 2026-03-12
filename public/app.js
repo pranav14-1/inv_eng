@@ -1,3 +1,4 @@
+const API_BASE_URL = ''; // Leave empty for relative paths or set to your Render URL later
 const PRODUCT_ID = 1;
 const stockDisplay = document.getElementById('stockDisplay');
 const buyBtn = document.getElementById('buyBtn');
@@ -72,7 +73,7 @@ function showExplanation(successes, soldOuts, errors, duration, initialStock, re
 
 async function fetchStock() {
     try {
-        const res = await fetch(`/api/stock/${PRODUCT_ID}`, { signal: AbortSignal.timeout(3000) });
+        const res = await fetch(`${API_BASE_URL}/api/stock/${PRODUCT_ID}`, { signal: AbortSignal.timeout(3000) });
         if (!res.ok) throw new Error('Network error');
         const data = await res.json();
 
@@ -109,7 +110,7 @@ async function buyProduct() {
 
     try {
         const startTime = performance.now();
-        const res = await fetch(`/buy/${PRODUCT_ID}`, { method: 'POST', signal: AbortSignal.timeout(5000) });
+        const res = await fetch(`${API_BASE_URL}/buy/${PRODUCT_ID}`, { method: 'POST', signal: AbortSignal.timeout(5000) });
         const data = await res.json();
         const latency = Math.round(performance.now() - startTime);
 
@@ -136,7 +137,7 @@ async function simulateTraffic() {
     // 1. Set the initial stock 
     logDetail(`Initializing database and cache stock to ${initialStock}...`, 'info');
     try {
-        await fetch(`/api/stock/${PRODUCT_ID}`, {
+        await fetch(`${API_BASE_URL}/api/stock/${PRODUCT_ID}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ stock: initialStock })
@@ -159,7 +160,7 @@ async function simulateTraffic() {
 
     for (let i = 0; i < numRequests; i++) {
         promises.push(
-            fetch(`/buy/${PRODUCT_ID}`, { method: 'POST', signal: AbortSignal.timeout(10000) })
+            fetch(`${API_BASE_URL}/buy/${PRODUCT_ID}`, { method: 'POST', signal: AbortSignal.timeout(10000) })
                 .then(async r => {
                     const text = await r.text();
                     try {
