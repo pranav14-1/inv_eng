@@ -2,9 +2,9 @@ const amqp = require('amqplib');
 
 let channel = null;
 
-async function connectQueue() {
+async function connectQueue(url = 'amqp://localhost') {
     try {
-        const connection = await amqp.connect('amqp://localhost');
+        const connection = await amqp.connect(url);
         channel = await connection.createChannel();
         await channel.assertQueue('purchase_orders', { durable: true });
         console.log("Connected to RabbitMQ and asserted queue: purchase_orders");

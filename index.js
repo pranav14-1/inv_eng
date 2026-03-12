@@ -3,7 +3,7 @@ const pool = require('./src/db');
 const redisClient = require('./src/redis');
 const queue = require('./src/queue');
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.static('public')); // Serve the frontend files in 'public' directory
@@ -104,5 +104,5 @@ app.listen(PORT, async () => {
   // Initialize Redis Cache when server starts
   await initRedis();
   // Initialize RabbitMQ Connection
-  await queue.connectQueue();
+  await queue.connectQueue(process.env.RABBITMQ_URL || 'amqp://localhost');
 });

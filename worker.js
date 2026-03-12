@@ -6,7 +6,7 @@ const redisClient = require('./src/redis');
 async function connectAndConsume() {
     try {
         // 1. Connect to RabbitMQ
-        const connection = await amqp.connect('amqp://localhost');
+        const connection = await amqp.connect(process.env.RABBITMQ_URL || 'amqp://localhost');
         const channel = await connection.createChannel();
 
         // Ensure the queue exists
