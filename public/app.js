@@ -1,4 +1,4 @@
-const API_BASE_URL = ''; // Leave empty for relative paths or set to your Render URL later
+const API_BASE_URL = 'https://inv-eng.onrender.com'; // Leave empty for relative paths or set to your Render URL later
 const PRODUCT_ID = 1;
 const stockDisplay = document.getElementById('stockDisplay');
 const buyBtn = document.getElementById('buyBtn');
