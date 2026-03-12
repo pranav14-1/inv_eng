@@ -5,7 +5,7 @@ const redisClient = redis.createClient({
     url: process.env.REDIS_URL || 'redis://localhost:6379',
     socket: {
         reconnectStrategy: (retries) => Math.min(retries * 50, 500),
-        tls: (process.env.REDIS_URL && process.env.REDIS_URL.startsWith('rediss')) ? true : false
+        tls: (process.env.REDIS_URL && process.env.REDIS_URL.startsWith('rediss')) ? true : undefined
     }
 });
 
