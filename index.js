@@ -99,10 +99,14 @@ app.post('/buy/:id', async (req, res) => {
   }
 });
 
+const worker = require('./worker');
+
 app.listen(PORT, async () => {
   console.log(`Server running at http://localhost:${PORT}`);
   // Initialize Redis Cache when server starts
   await initRedis();
   // Initialize RabbitMQ Connection
   await queue.connectQueue(process.env.RABBITMQ_URL || 'amqp://localhost');
+  // Initialize Background Worker (Consolidated for free hosting)
+  worker.connectAndConsume().catch(err => console.error("Worker failed to start:", err));
 });

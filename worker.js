@@ -95,5 +95,5 @@ async function processOrder(productId) {
     }
 }
 
-// Start the worker
-connectAndConsume();
+// Export the start function for consolidation
+module.exports = { connectAndConsume };

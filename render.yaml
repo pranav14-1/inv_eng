@@ -1,7 +1,8 @@
 services:
-  # 1. The Web Service (Express API)
+  # The Unified Service (API + Worker)
+  # This uses Render's 'Free Web Service' tier which doesn't require a card.
   - type: web
-    name: inventory-api
+    name: inventory-engine
     runtime: node
     buildCommand: npm install
     startCommand: node index.js
@@ -9,62 +10,16 @@ services:
       - key: PORT
         value: 3000
       - key: DB_USER
-        fromDatabase:
-          name: inventory-db
-          property: user
+        sync: false # Get from Neon.tech
       - key: DB_HOST
-        fromDatabase:
-          name: inventory-db
-          property: host
+        sync: false # Get from Neon.tech
       - key: DB_NAME
-        fromDatabase:
-          name: inventory-db
-          property: database
+        sync: false # Get from Neon.tech
       - key: DB_PASSWORD
-        fromDatabase:
-          name: inventory-db
-          property: password
+        sync: false # Get from Neon.tech
       - key: DB_PORT
-        fromDatabase:
-          name: inventory-db
-          property: port
+        value: 5432
       - key: REDIS_URL
-        sync: false # Set manually via Dashboard (from Upstash)
+        sync: false # Get from Upstash
       - key: RABBITMQ_URL
-        sync: false # Set manually via Dashboard (from CloudAMQP)
-
-  # 2. The Background Worker (Queue Processor)
-  - type: worker
-    name: inventory-worker
-    runtime: node
-    buildCommand: npm install
-    startCommand: node worker.js
-    envVars:
-      - key: DB_USER
-        fromDatabase:
-          name: inventory-db
-          property: user
-      - key: DB_HOST
-        fromDatabase:
-          name: inventory-db
-          property: host
-      - key: DB_NAME
-        fromDatabase:
-          name: inventory-db
-          property: database
-      - key: DB_PASSWORD
-        fromDatabase:
-          name: inventory-db
-          property: password
-      - key: DB_PORT
-        fromDatabase:
-          name: inventory-db
-          property: port
-      - key: REDIS_URL
-        sync: false 
-      - key: RABBITMQ_URL
-        sync: false
-
-databases:
-  - name: inventory-db
-    plan: free
+        sync: false # Get from CloudAMQP
